@@ -20,4 +20,6 @@ mongoose.connect(process.env.DATABASE_URL)
 const userSchema = new mongoose.Schema({
     name: String,
     email: String,
+    password: String,
 })
+
