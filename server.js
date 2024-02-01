@@ -17,7 +17,7 @@ app.listen(port, () => {
 
 mongoose.connect(process.env.DATABASE_URL)
 
-const budgetSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     name: String,
-    max: Number,
+    email: String,
 })
