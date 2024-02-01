@@ -12,5 +12,12 @@ app.use(bodyParser.json());
 const port = process.env.PORT || 4000;
 
 app.listen(port, () => {
-  console.log(`Listeng on port: ${port}`);
-});
+    console.log(`Listening on port: ${port}`)
+})
+
+mongoose.connect(process.env.DATABASE_URL)
+
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+})
