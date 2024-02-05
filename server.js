@@ -13,6 +13,8 @@ app.use(bodyParser.json());
 
 const port = process.env.PORT || 4000;
 
+const SALT_ROUNDS = 6
+
 app.listen(port, () => {
     console.log(`Listening on port: ${port}`)
 })
@@ -64,10 +66,7 @@ function createJWT(user) {
   );
 }
 
-function checkToken(req, res) {
-  console.log('req.user', req.user)
-  res.json(req.exp)
-}
+
 
 async function createUser (req, res) {
   try {
@@ -86,19 +85,21 @@ async function createUser (req, res) {
 app.post('/users/new' , (req, res) => {
   createUser(req, res)
 })
+app.get('/users/:id' , async (req, res) => {
+  const user = await User.findById(req.params.id)
+  res.json(user)
+})
 
-async function login (req, res) {
+async function login(req, res) {
   try {
-    console.log(req.body)
-    const user = await User.create(req.body);
-    console.log(user)
-    const token = createJWT(user);
-    res.json(token);
-  }
-  catch(e) {
-    console.error(e)
-    res.sendStatus(500)
-  }
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) throw new Error();
+    const match = await bcrypt.compare(req.body.password, user.password);
+    if (!match) throw new Error();
+    res.json( createJWT(user) );
+    } 
+    catch { res.status(400).json('Bad Credentials'); }
+
 }
 
 app.post('/users' , (req, res) => {
