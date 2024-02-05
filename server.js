@@ -56,6 +56,34 @@ const User = mongoose.model("User", userSchema)
 const Product = mongoose.model("Product", productSchema)
 const Cart = mongoose.model("Cart", cartSchema)
 
+async function createUser (req, res) {
+    try {
+      console.log(req.body)
+      const user = await User.create(req.body);
+      console.log(user)
+      const token = createJWT(user);
+      res.json(token);
+    }
+    catch(e) {
+      console.error(e)
+      res.sendStatus(500)
+    }
+  }
+  
+async function login (req, res) {
+    try {
+        console.log(req.body)
+        const user = await User.create(req.body);
+        console.log(user)
+        const token = createJWT(user);
+        res.json(token);
+    }
+    catch(e) {
+        console.error(e)
+        res.sendStatus(500)
+    }
+    }
+
 function createJWT(user) {
   return jwt.sign(
     { user },
@@ -64,42 +92,32 @@ function createJWT(user) {
   );
 }
 
-function checkToken(req, res) {
-  console.log('req.user', req.user)
-  res.json(req.exp)
-}
+app.get('/', (req, res) => {
+    res.json({
+        message: "Cosmic Backend Working"
+    })
+})
 
-async function createUser (req, res) {
-  try {
-    console.log(req.body)
-    const user = await User.create(req.body);
-    console.log(user)
-    const token = createJWT(user);
-    res.json(token);
-  }
-  catch(e) {
-    console.error(e)
-    res.sendStatus(500)
-  }
-}
+app.get('/users' , async (req, res) => {
+    try {
+        const allUsers = await User.find({})
+        res.json(allUsers)
+    } catch(e) {
+        console.error(e)
+    }
+})
+
+app.get('/users/:id' , async (req, res) => {
+    const user = await User.findById(req.params.id)
+    res.json(user)
+})
+
 
 app.post('/users/new' , (req, res) => {
   createUser(req, res)
 })
 
-async function login (req, res) {
-  try {
-    console.log(req.body)
-    const user = await User.create(req.body);
-    console.log(user)
-    const token = createJWT(user);
-    res.json(token);
-  }
-  catch(e) {
-    console.error(e)
-    res.sendStatus(500)
-  }
-}
+
 
 app.post('/users' , (req, res) => {
   login(req, res)
@@ -107,11 +125,6 @@ app.post('/users' , (req, res) => {
 
 
 
-app.get('/', (req, res) => {
-    res.json({
-        message: "Cosmic Backend Working"
-    })
-})
 
 app.get('/products', async (req, res) => {
     try {
