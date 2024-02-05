@@ -58,6 +58,34 @@ const User = mongoose.model("User", userSchema)
 const Product = mongoose.model("Product", productSchema)
 const Cart = mongoose.model("Cart", cartSchema)
 
+async function createUser (req, res) {
+    try {
+      console.log(req.body)
+      const user = await User.create(req.body);
+      console.log(user)
+      const token = createJWT(user);
+      res.json(token);
+    }
+    catch(e) {
+      console.error(e)
+      res.sendStatus(500)
+    }
+  }
+  
+async function login (req, res) {
+    try {
+        console.log(req.body)
+        const user = await User.create(req.body);
+        console.log(user)
+        const token = createJWT(user);
+        res.json(token);
+    }
+    catch(e) {
+        console.error(e)
+        res.sendStatus(500)
+    }
+    }
+
 function createJWT(user) {
   return jwt.sign(
     { user },
@@ -66,41 +94,32 @@ function createJWT(user) {
   );
 }
 
+app.get('/', (req, res) => {
+    res.json({
+        message: "Cosmic Backend Working"
+    })
+})
 
+app.get('/users' , async (req, res) => {
+    try {
+        const allUsers = await User.find({})
+        res.json(allUsers)
+    } catch(e) {
+        console.error(e)
+    }
+})
 
-async function createUser (req, res) {
-  try {
-    console.log(req.body)
-    const user = await User.create(req.body);
-    console.log(user)
-    const token = createJWT(user);
-    res.json(token);
-  }
-  catch(e) {
-    console.error(e)
-    res.sendStatus(500)
-  }
-}
+app.get('/users/:id' , async (req, res) => {
+    const user = await User.findById(req.params.id)
+    res.json(user)
+})
+
 
 app.post('/users/new' , (req, res) => {
   createUser(req, res)
 })
-app.get('/users/:id' , async (req, res) => {
-  const user = await User.findById(req.params.id)
-  res.json(user)
-})
 
-async function login(req, res) {
-  try {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) throw new Error();
-    const match = await bcrypt.compare(req.body.password, user.password);
-    if (!match) throw new Error();
-    res.json( createJWT(user) );
-    } 
-    catch { res.status(400).json('Bad Credentials'); }
 
-}
 
 app.post('/users' , (req, res) => {
   login(req, res)
@@ -108,11 +127,6 @@ app.post('/users' , (req, res) => {
 
 
 
-app.get('/', (req, res) => {
-    res.json({
-        message: "Cosmic Backend Working"
-    })
-})
 
 app.get('/products', async (req, res) => {
     try {
@@ -170,4 +184,75 @@ app.put('/products/:id', (req, res) => {
         res.sendStatus(500)
     })
 })
+
+app.post('/cart/add', async (req, res) => {
+  try {
+      const { productId, quantity } = req.body;
+      const product = await Product.findById(productId);
+      if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+      }
+      // Check if the user already has a cart or create one
+      let cart = await Cart.findOne({ userId: req.user._id });
+      if (!cart) {
+          cart = await Cart.create({ userId: req.user._id, products: [] });
+      }
+      // Check if the product is already in the cart
+      const existingProduct = cart.products.find(p => p.productId === productId);
+      if (existingProduct) {
+          existingProduct.quantity += quantity;
+      } else {
+          cart.products.push({ productId, quantity });
+      }
+      await cart.save();
+      res.sendStatus(200);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.get('/cart', async (req, res) => {
+  try {
+      const cart = await Cart.findOne({ userId: req.user._id });
+      res.json(cart);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.put('/cart/update/:productId', async (req, res) => {
+  try {
+      const { productId } = req.params;
+      const { quantity } = req.body;
+      const cart = await Cart.findOne({ userId: req.user._id });
+      const productIndex = cart.products.findIndex(p => p.productId === productId);
+      if (productIndex !== -1) {
+          cart.products[productIndex].quantity = quantity;
+          await cart.save();
+          res.sendStatus(200);
+      } else {
+          res.status(404).json({ message: 'Product not found in the cart' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.delete('/cart/remove/:productId', async (req, res) => {
+  try {
+      const { productId } = req.params;
+      const cart = await Cart.findOne({ userId: req.user._id });
+      cart.products = cart.products.filter(p => p.productId !== productId);
+      await cart.save();
+      res.sendStatus(200);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+
 
