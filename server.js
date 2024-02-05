@@ -170,3 +170,74 @@ app.put('/products/:id', (req, res) => {
     })
 })
 
+app.post('/cart/add', async (req, res) => {
+  try {
+      const { productId, quantity } = req.body;
+      const product = await Product.findById(productId);
+      if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+      }
+      // Check if the user already has a cart or create one
+      let cart = await Cart.findOne({ userId: req.user._id });
+      if (!cart) {
+          cart = await Cart.create({ userId: req.user._id, products: [] });
+      }
+      // Check if the product is already in the cart
+      const existingProduct = cart.products.find(p => p.productId === productId);
+      if (existingProduct) {
+          existingProduct.quantity += quantity;
+      } else {
+          cart.products.push({ productId, quantity });
+      }
+      await cart.save();
+      res.sendStatus(200);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.get('/cart', async (req, res) => {
+  try {
+      const cart = await Cart.findOne({ userId: req.user._id });
+      res.json(cart);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.put('/cart/update/:productId', async (req, res) => {
+  try {
+      const { productId } = req.params;
+      const { quantity } = req.body;
+      const cart = await Cart.findOne({ userId: req.user._id });
+      const productIndex = cart.products.findIndex(p => p.productId === productId);
+      if (productIndex !== -1) {
+          cart.products[productIndex].quantity = quantity;
+          await cart.save();
+          res.sendStatus(200);
+      } else {
+          res.status(404).json({ message: 'Product not found in the cart' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+app.delete('/cart/remove/:productId', async (req, res) => {
+  try {
+      const { productId } = req.params;
+      const cart = await Cart.findOne({ userId: req.user._id });
+      cart.products = cart.products.filter(p => p.productId !== productId);
+      await cart.save();
+      res.sendStatus(200);
+  } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+  }
+});
+
+
+
