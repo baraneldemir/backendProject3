@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import bcrypt from "bcrypt"
+import  jwt from "jsonwebtoken";
 
 const app = express();
 
@@ -18,9 +20,18 @@ app.listen(port, () => {
 mongoose.connect(process.env.DATABASE_URL)
 
 const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    password: String,
+    fullname: {type: String, required: true},
+    email: {
+      type: String,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      required: true
+    },
+    password: {
+      type: String,
+      required: true
+    },
     admin: Boolean
 })
 
@@ -44,6 +55,57 @@ const cartSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema)
 const Product = mongoose.model("Product", productSchema)
 const Cart = mongoose.model("Cart", cartSchema)
+
+function createJWT(user) {
+  return jwt.sign(
+    { user },
+    process.env.SECRET,
+    { expiresIn: '24h' }
+  );
+}
+
+function checkToken(req, res) {
+  console.log('req.user', req.user)
+  res.json(req.exp)
+}
+
+async function createUser (req, res) {
+  try {
+    console.log(req.body)
+    const user = await User.create(req.body);
+    console.log(user)
+    const token = createJWT(user);
+    res.json(token);
+  }
+  catch(e) {
+    console.error(e)
+    res.sendStatus(500)
+  }
+}
+
+app.post('/users/new' , (req, res) => {
+  createUser(req, res)
+})
+
+async function login (req, res) {
+  try {
+    console.log(req.body)
+    const user = await User.create(req.body);
+    console.log(user)
+    const token = createJWT(user);
+    res.json(token);
+  }
+  catch(e) {
+    console.error(e)
+    res.sendStatus(500)
+  }
+}
+
+app.post('/users' , (req, res) => {
+  login(req, res)
+})
+
+
 
 app.get('/', (req, res) => {
     res.json({
