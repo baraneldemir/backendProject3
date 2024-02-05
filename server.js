@@ -3,13 +3,16 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt"
-import  jwt from "jsonwebtoken";
+import checkToken from './config/checkToken.js'
+import usersRouter from './routes/users.js'
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+
+app.use(checkToken)
+app.use('/users', usersRouter)
 
 const port = process.env.PORT || 4000;
 
@@ -20,22 +23,6 @@ app.listen(port, () => {
 })
 
 mongoose.connect(process.env.DATABASE_URL)
-
-const userSchema = new mongoose.Schema({
-    fullname: {type: String, required: true},
-    email: {
-      type: String,
-      unique: true,
-      trim: true,
-      lowercase: true,
-      required: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    admin: Boolean
-})
 
 const productSchema = new mongoose.Schema({
     name: String,
@@ -54,78 +41,14 @@ const cartSchema = new mongoose.Schema({
     }
 })
 
-const User = mongoose.model("User", userSchema)
 const Product = mongoose.model("Product", productSchema)
 const Cart = mongoose.model("Cart", cartSchema)
-
-async function createUser (req, res) {
-    try {
-      console.log(req.body)
-      const user = await User.create(req.body);
-      console.log(user)
-      const token = createJWT(user);
-      res.json(token);
-    }
-    catch(e) {
-      console.error(e)
-      res.sendStatus(500)
-    }
-  }
-  
-async function login (req, res) {
-    try {
-        console.log(req.body)
-        const user = await User.create(req.body);
-        console.log(user)
-        const token = createJWT(user);
-        res.json(token);
-    }
-    catch(e) {
-        console.error(e)
-        res.sendStatus(500)
-    }
-    }
-
-function createJWT(user) {
-  return jwt.sign(
-    { user },
-    process.env.SECRET,
-    { expiresIn: '24h' }
-  );
-}
 
 app.get('/', (req, res) => {
     res.json({
         message: "Cosmic Backend Working"
     })
 })
-
-app.get('/users' , async (req, res) => {
-    try {
-        const allUsers = await User.find({})
-        res.json(allUsers)
-    } catch(e) {
-        console.error(e)
-    }
-})
-
-app.get('/users/:id' , async (req, res) => {
-    const user = await User.findById(req.params.id)
-    res.json(user)
-})
-
-
-app.post('/users/new' , (req, res) => {
-  createUser(req, res)
-})
-
-
-
-app.post('/users' , (req, res) => {
-  login(req, res)
-})
-
-
 
 
 app.get('/products', async (req, res) => {
