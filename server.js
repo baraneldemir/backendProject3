@@ -31,12 +31,18 @@ const productSchema = new mongoose.Schema({
     description: String,
     price: Number,
     stock: Number,
-    image: String
+    image: String,
+    category: String
 })
 
 const cartSchema = new mongoose.Schema({
-    products: String,
-    amount: Number,
+    products: [{
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product"
+        },
+        quantity: Number
+    }],
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
@@ -69,7 +75,8 @@ app.post('/products/new', (req, res) => {
         description: product.description,
         price: product.price,
         stock: product.stock,
-        image: product.image
+        image: product.image,
+        category: product.category
     })
     newProduct.save()
     .then(() => {
@@ -80,8 +87,12 @@ app.post('/products/new', (req, res) => {
 })
 
 app.get('/products/:id', async (req, res) => {
-    const product = await Product.findById(req.params.id)
-    res.json(product)
+    try {
+        const product = await Product.findById(req.params.id)
+        res.json(product)
+    } catch (e) {
+        console.error(e)
+    }
 })
 
 app.delete('/products/:id', (req, res) => {
@@ -100,7 +111,8 @@ app.put('/products/:id', (req, res) => {
         description: req.body.description, 
         price: req.body.price,
         stock: req.body.stock,
-        image: req.body.image
+        image: req.body.image,
+        category: req.body.category
     })
     .then(() => {
         res.sendStatus(200)
@@ -112,20 +124,16 @@ app.put('/products/:id', (req, res) => {
 
 app.post('/cart/add', async (req, res) => {
   try {
-      const { productId, quantity } = req.body;
-      const product = await Product.findById(productId);
-      if (!product) {
-          return res.status(404).json({ message: 'Product not found' });
-      }
+      const { productId, quantity, userId } = req.body;
       // Check if the user already has a cart or create one
-      let cart = await Cart.findOne({ userId: req.user._id });
+      let cart = await Cart.findOne({ userId });
       if (!cart) {
-          cart = await Cart.create({ userId: req.user._id, products: [] });
+          cart = await Cart.create({ userId , products: [] });
       }
       // Check if the product is already in the cart
-      const existingProduct = cart.products.find(p => p.productId === productId);
-      if (existingProduct) {
-          existingProduct.quantity += quantity;
+      const existingProductIndex = cart.products.findIndex(p => String(p.productId) === String(productId));
+      if (existingProductIndex !== -1) {
+          cart.products[existingProductIndex].quantity += quantity;
       } else {
           cart.products.push({ productId, quantity });
       }
@@ -138,8 +146,9 @@ app.post('/cart/add', async (req, res) => {
 });
 
 app.get('/cart', async (req, res) => {
+    const userId = req.query.userId
   try {
-      const cart = await Cart.findOne({ userId: req.user._id });
+      const cart = await Cart.findOne({ userId });
       res.json(cart);
   } catch (error) {
       console.error(error);
@@ -148,29 +157,31 @@ app.get('/cart', async (req, res) => {
 });
 
 app.put('/cart/update/:productId', async (req, res) => {
-  try {
-      const { productId } = req.params;
-      const { quantity } = req.body;
-      const cart = await Cart.findOne({ userId: req.user._id });
-      const productIndex = cart.products.findIndex(p => p.productId === productId);
-      if (productIndex !== -1) {
-          cart.products[productIndex].quantity = quantity;
-          await cart.save();
-          res.sendStatus(200);
-      } else {
-          res.status(404).json({ message: 'Product not found in the cart' });
-      }
-  } catch (error) {
-      console.error(error);
-      res.sendStatus(500);
-  }
-});
+    try {
+        const { productId } = req.params;
+        const { quantity } = req.body;
+        const userId = req.query.userId
+        const cart = await Cart.findOne({ userId });
+        const productIndex = cart.products.findIndex(p => String(p.productId) === String(productId)); // Correct comparison
+        if (productIndex !== -1) {
+            cart.products[productIndex].quantity = quantity;
+            await cart.save();
+            res.sendStatus(200);
+        } else {
+            res.status(404).json({ message: 'Product not found in the cart' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+  });
 
 app.delete('/cart/remove/:productId', async (req, res) => {
   try {
+    const userId = req.query.userId
       const { productId } = req.params;
-      const cart = await Cart.findOne({ userId: req.user._id });
-      cart.products = cart.products.filter(p => p.productId !== productId);
+      const cart = await Cart.findOne({ userId });
+      cart.products = cart.products.filter(p => String(p.productId) !== String(productId));
       await cart.save();
       res.sendStatus(200);
   } catch (error) {
