@@ -5,6 +5,9 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
+import fetch from "node-fetch";
+
+
 
 const app = express();
 
@@ -16,7 +19,6 @@ app.use('/users', usersRouter)
 
 const port = process.env.PORT || 4000;
 
-const SALT_ROUNDS = 6
 
 app.listen(port, () => {
     console.log(`Listening on port: ${port}`)
@@ -176,6 +178,4 @@ app.delete('/cart/remove/:productId', async (req, res) => {
       res.sendStatus(500);
   }
 });
-
-
 
