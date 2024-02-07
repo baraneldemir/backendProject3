@@ -5,11 +5,8 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
-<<<<<<< HEAD
-=======
 
 
->>>>>>> development
 
 
 const app = express();
