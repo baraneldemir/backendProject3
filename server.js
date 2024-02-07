@@ -148,7 +148,7 @@ app.post('/cart/add', async (req, res) => {
 app.get('/cart', async (req, res) => {
     const userId = req.query.userId
   try {
-      const cart = await Cart.findOne({ userId });
+      const cart = await Cart.findOne({ userId }).populate('products.productId'); //Gives the details from the Schema
       res.json(cart);
   } catch (error) {
       console.error(error);
