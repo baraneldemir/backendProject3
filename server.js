@@ -5,6 +5,9 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
+import fetch from "node-fetch";
+
+
 
 const app = express();
 
@@ -15,6 +18,7 @@ app.use(checkToken)
 app.use('/users', usersRouter)
 
 const port = process.env.PORT || 4000;
+
 
 app.listen(port, () => {
     console.log(`Listening on port: ${port}`)
@@ -144,7 +148,7 @@ app.post('/cart/add', async (req, res) => {
 app.get('/cart', async (req, res) => {
     const userId = req.query.userId
   try {
-      const cart = await Cart.findOne({ userId });
+      const cart = await Cart.findOne({ userId }).populate('products.productId'); 
       res.json(cart);
   } catch (error) {
       console.error(error);
@@ -185,6 +189,4 @@ app.delete('/cart/remove/:productId', async (req, res) => {
       res.sendStatus(500);
   }
 });
-
-
 
