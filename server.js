@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
-import fetch from "node-fetch";
+
 
 
 
@@ -85,6 +85,22 @@ app.post('/products/new', (req, res) => {
     })
     .catch(e => console.error(e))
 })
+
+
+app.get('/products/search', async (req, res) => {
+    const { query } = req.query
+    console.log(query)
+    try {
+        const regex = new RegExp(query, 'i')
+        const foundProducts = await Product.find({ $or: [{ name: regex }, { description: regex }] })
+        console.log(foundProducts)
+        res.json(foundProducts)
+    } catch (error) {
+        console.error(error)
+        res.sendStatus(500)
+    }
+});
+
 
 app.get('/products/:id', async (req, res) => {
     try {
