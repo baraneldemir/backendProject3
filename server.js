@@ -5,8 +5,6 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
-import fetch from "node-fetch";
-
 
 
 const app = express();
