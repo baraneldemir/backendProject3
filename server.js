@@ -35,7 +35,7 @@ const productSchema = new mongoose.Schema({
     category: String
 })
 
-const cartSchema = new mongoose.Schema({
+const cartSchema = new mongoose.Schema({ 
     products: [{
         productId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -149,6 +149,7 @@ app.get('/cart', async (req, res) => {
     const userId = req.query.userId
   try {
       const cart = await Cart.findOne({ userId }).populate('products.productId'); 
+      console.log(cart)
       res.json(cart);
   } catch (error) {
       console.error(error);
@@ -180,7 +181,8 @@ app.delete('/cart/remove/:productId', async (req, res) => {
   try {
     const userId = req.query.userId
       const { productId } = req.params;
-      const cart = await Cart.findOne({ userId });
+      const cart = await Cart.findOne({ userId })
+      console.log("RUNNING" , cart.products)
       cart.products = cart.products.filter(p => String(p.productId) !== String(productId));
       await cart.save();
       res.sendStatus(200);
