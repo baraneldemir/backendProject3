@@ -5,6 +5,11 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import checkToken from './config/checkToken.js'
 import usersRouter from './routes/users.js'
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> development
 
 
 const app = express();
@@ -33,7 +38,7 @@ const productSchema = new mongoose.Schema({
     category: String
 })
 
-const cartSchema = new mongoose.Schema({
+const cartSchema = new mongoose.Schema({ 
     products: [{
         productId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -83,6 +88,22 @@ app.post('/products/new', (req, res) => {
     })
     .catch(e => console.error(e))
 })
+
+
+app.get('/products/search', async (req, res) => {
+    const { query } = req.query
+    console.log(query)
+    try {
+        const regex = new RegExp(query, 'i')
+        const foundProducts = await Product.find({ $or: [{ name: regex }, { description: regex }] })
+        console.log(foundProducts)
+        res.json(foundProducts)
+    } catch (error) {
+        console.error(error)
+        res.sendStatus(500)
+    }
+});
+
 
 app.get('/products/:id', async (req, res) => {
     try {
@@ -147,6 +168,7 @@ app.get('/cart', async (req, res) => {
     const userId = req.query.userId
   try {
       const cart = await Cart.findOne({ userId }).populate('products.productId'); 
+      console.log(cart)
       res.json(cart);
   } catch (error) {
       console.error(error);
@@ -178,7 +200,8 @@ app.delete('/cart/remove/:productId', async (req, res) => {
   try {
     const userId = req.query.userId
       const { productId } = req.params;
-      const cart = await Cart.findOne({ userId });
+      const cart = await Cart.findOne({ userId })
+      console.log("RUNNING" , cart.products)
       cart.products = cart.products.filter(p => String(p.productId) !== String(productId));
       await cart.save();
       res.sendStatus(200);
