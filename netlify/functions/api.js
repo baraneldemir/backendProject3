@@ -204,4 +204,3 @@ router.delete('/cart/remove/:productId', async (req, res) => {
 api.use("/api/", router)
 
 export const handler = serverless(api)
-
