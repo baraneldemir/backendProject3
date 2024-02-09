@@ -6,6 +6,11 @@
   from = "/api/*"
   status = 200
   to = "/.netlify/functions/api/:splat"
+[[redirects]]
+  force = true
+  from = "/users/*"
+  status = 200
+  to = "/.netlify/functions/api/:splat"
 [[headers]]
   # Define which paths this specific [[headers]] block will cover.
   for = "/*"
