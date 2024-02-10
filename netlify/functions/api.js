@@ -82,11 +82,11 @@ router.post('/products/new', (req, res) => {
 
 router.get('/products/search', async (req, res) => {
     const { query } = req.query
-    console.log(query)
+   
     try {
         const regex = new RegExp(query, 'i')
         const foundProducts = await Product.find({ $or: [{ name: regex }, { description: regex }] })
-        console.log(foundProducts)
+        
         res.json(foundProducts)
     } catch (error) {
         console.error(error)
@@ -158,7 +158,7 @@ router.get('/cart', async (req, res) => {
     const userId = req.query.userId
   try {
       const cart = await Cart.findOne({ userId }).populate('products.productId'); 
-      console.log(cart)
+      
       res.json(cart);
   } catch (error) {
       console.error(error);
